@@ -22,7 +22,7 @@ from openpi.policies import policy_config as _policy_config
 from openpi.shared import download
 from openpi.training import config as _config
 from openpi.training import data_loader as _data_loader
-
+import os
 
 class PI0:
 
@@ -31,16 +31,16 @@ class PI0:
         self.model_name = model_name
         self.checkpoint_id = checkpoint_id
 
-        config = _config.get_config(self.train_config_name)
-
-        specified_path = f"policy/pi0/checkpoints/{self.train_config_name}/{self.model_name}/{self.checkpoint_id}/assets/"
+        specified_path = f"policy/pi05/checkpoints/{self.train_config_name}/{self.model_name}/{self.checkpoint_id}/assets/"
         entries = os.listdir(specified_path)
         assets_id = entries[0]
 
+        config = _config.get_config(self.train_config_name)
         self.policy = _policy_config.create_trained_policy(
             config,
-            f"policy/pi0/checkpoints/{self.train_config_name}/{self.model_name}/{self.checkpoint_id}",
-            robotwin_repo_id=assets_id)
+            f"policy/pi05/checkpoints/{self.train_config_name}/{self.model_name}/{self.checkpoint_id}",
+            robotwin_repo_id=assets_id,
+            )
         print("loading model success!")
         self.img_size = (224, 224)
         self.observation_window = None

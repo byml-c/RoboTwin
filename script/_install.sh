@@ -2,10 +2,7 @@ echo "Installing the necessary packages ..."
 pip install -r script/requirements.txt
 
 echo "Installing pytorch3d ..."
-# cd third_party/pytorch3d_simplified
-# pip install -e .
-# cd ../..
-pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+pip install "git+https://github.com/facebookresearch/pytorch3d.git"
 
 echo "Adjusting code in sapien/wrapper/urdf_loader.py ..."
 # location of sapien, like "~/.conda/envs/RoboTwin/lib/python3.10/site-packages/sapien"
@@ -56,6 +53,6 @@ cd ../..
 
 echo "Installation basic environment complete!"
 echo -e "You need to:"
-echo -e "    1. \033[34m\033[1m(Important!)\033[0m Download asserts from huggingface."
+echo -e "    1. \033[34m\033[1m(Important!)\033[0m Download assets from huggingface."
 echo -e "    2. Install requirements for running baselines. (Optional)"
 echo "See INSTALLATION.md for more instructions."
