@@ -31,10 +31,11 @@ try:
 
         def __init__(
             self,
-            robot_origion_pose,
+            robot_origin_pose,
             active_joints_name,
             all_joints,
             yml_path=None,
+            robot_origin_link=None,
         ):
             super().__init__()
             ta.setup_logging("CRITICAL")  # hide logging
@@ -44,7 +45,8 @@ try:
                 self.yml_path = yml_path
             else:
                 raise ValueError("[Planner.py]: CuroboPlanner yml_path is None!")
-            self.robot_origion_pose = robot_origion_pose
+            self.robot_origin_pose = robot_origin_pose
+            self.robot_origin_link = robot_origin_link
             self.active_joints_name = active_joints_name
             self.all_joints = all_joints
 
@@ -59,18 +61,23 @@ try:
                     "cuboid": {
                         "table": {
                             "dims": [0.7, 2, 0.04],  # x, y, z
-                            "pose": [
-                                self.robot_origion_pose.p[1],
-                                0.0,
-                                0.74 - self.robot_origion_pose.p[2],
-                                1,
-                                0,
-                                0,
-                                0.0,
-                            ],  # x, y, z, qw, qx, qy, qz
+                            "pose": [0.0, 0.0, 0.74, 1.0, 0.0, 0.0, 0.0] # x, y, z, qw, qx, qy, qz
                         },
                     }
                 }
+                if robot_origin_link is not None:
+                    link_pose = robot_origin_link.get_pose()
+                    link_pose = np.concatenate([np.array(link_pose.p), np.array(link_pose.q)])
+                    rel_p, rel_q = self._trans_from_world_to_base(
+                        np.array(world_config["cuboid"]["table"]["pose"]), link_pose)
+                    world_config["cuboid"]["table"]["pose"] = np.concatenate([rel_p, rel_q]).tolist()
+                else:
+                    pose = world_config["cuboid"]["table"]["pose"]
+                    world_config["cuboid"]["table"]["pose"] = [
+                        pose[0] + self.frame_bias[0], pose[1] + self.frame_bias[1], pose[2] + self.frame_bias[2],
+                        pose[3], pose[4], pose[5], pose[6]
+                    ]
+                    
             motion_gen_config = MotionGenConfig.load_from_robot_config(
                 self.yml_path,
                 world_config,
@@ -98,12 +105,17 @@ try:
             arms_tag=None,
         ):  
             world_base_pose = np.concatenate([
-                np.array(self.robot_origion_pose.p),
-                np.array(self.robot_origion_pose.q),
+                np.array(self.robot_origin_pose.p),
+                np.array(self.robot_origin_pose.q),
             ])
             world_target_pose = np.concatenate([np.array(target_gripper_pose.p), np.array(target_gripper_pose.q)])
             target_pose_p, target_pose_q = self._trans_from_world_to_base(world_base_pose, world_target_pose)
-            if not ("aloha-agilex" in self.yml_path):
+            if self.robot_origin_link is not None:
+                world_arm_base_pose = self.robot_origin_link.get_pose()
+                world_arm_base_pose = np.concatenate([np.array(world_arm_base_pose.p), np.array(world_arm_base_pose.q)])
+                target_pose_p, target_pose_q = self._trans_from_world_to_base(
+                    world_arm_base_pose, world_target_pose)
+            elif not ("aloha-agilex" in self.yml_path):
                 target_pose_p[0] += self.frame_bias[0]
                 target_pose_p[1] += self.frame_bias[1]
                 target_pose_p[2] += self.frame_bias[2]
@@ -140,6 +152,7 @@ try:
                 )
                 plan_config.pose_cost_metric = pose_cost_metric
 
+            self.motion_gen.reset()
             result = self.motion_gen.plan_single(start_joint_states, goal_pose_of_ee, plan_config)
 
             # output
@@ -177,15 +190,20 @@ try:
             num_poses = len(target_gripper_pose_list)
             # transformation from world to arm's base
             world_base_pose = np.concatenate([
-                np.array(self.robot_origion_pose.p),
-                np.array(self.robot_origion_pose.q),
+                np.array(self.robot_origin_pose.p),
+                np.array(self.robot_origin_pose.q),
             ])
             poses_list = []
             for target_gripper_pose in target_gripper_pose_list:
                 world_target_pose = np.concatenate([np.array(target_gripper_pose.p), np.array(target_gripper_pose.q)])
                 base_target_pose_p, base_target_pose_q = self._trans_from_world_to_base(world_base_pose, world_target_pose)
-
-                if not ("aloha-agilex" in self.yml_path):
+                
+                if self.robot_origin_link is not None:
+                    world_arm_base_pose = self.robot_origin_link.get_pose()
+                    world_arm_base_pose = np.concatenate([np.array(world_arm_base_pose.p), np.array(world_arm_base_pose.q)])
+                    base_target_pose_p, base_target_pose_q = self._trans_from_world_to_base(
+                        world_arm_base_pose, world_target_pose)
+                elif not ("aloha-agilex" in self.yml_path):
                     base_target_pose_p[0] += self.frame_bias[0]
                     base_target_pose_p[1] += self.frame_bias[1]
                     base_target_pose_p[2] += self.frame_bias[2]
@@ -226,6 +244,7 @@ try:
                 plan_config.pose_cost_metric = pose_cost_metric
 
             try:
+                self.motion_gen_batch.reset()
                 result = self.motion_gen_batch.plan_batch(start_joint_states, goal_pose_of_ee, plan_config)
             except Exception as e:
                 return {"status": ["Failure" for i in range(10)]}
@@ -284,7 +303,7 @@ class MplibPlanner:
         urdf_path,
         srdf_path,
         move_group,
-        robot_origion_pose,
+        robot_origin_pose,
         robot_entity,
         planner_type="mplib_RRT",
         scene=None,
@@ -304,7 +323,7 @@ class MplibPlanner:
                 user_joint_names=joints,
                 use_convex=False,
             )
-            self.planner.set_base_pose(robot_origion_pose)
+            self.planner.set_base_pose(robot_origin_pose)
         else:
             planning_world = SapienPlanningWorld(scene, [robot_entity])
             self.planner = SapienPlanner(planning_world, move_group)

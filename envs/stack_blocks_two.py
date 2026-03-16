@@ -15,7 +15,7 @@ class stack_blocks_two(Base_Task):
         for i in range(2):
             block_pose = rand_pose(
                 xlim=[-0.28, 0.28],
-                ylim=[-0.08, 0.05],
+                ylim=[-0.1, -0.05],
                 zlim=[0.741 + block_half_size],
                 qpos=[1, 0, 0, 0],
                 ylim_prop=True,
@@ -33,7 +33,7 @@ class stack_blocks_two(Base_Task):
                    or not check_block_pose(block_pose)):
                 block_pose = rand_pose(
                     xlim=[-0.28, 0.28],
-                    ylim=[-0.08, 0.05],
+                    ylim=[-0.1, -0.05],
                     zlim=[0.741 + block_half_size],
                     qpos=[1, 0, 0, 0],
                     ylim_prop=True,
@@ -49,15 +49,16 @@ class stack_blocks_two(Base_Task):
                 half_size=(block_half_size, block_half_size, block_half_size),
                 color=color,
                 name="box",
+                boxtype="horizontal"
             )
 
         self.block1 = create_block(block_pose_lst[0], (1, 0, 0))
         self.block2 = create_block(block_pose_lst[1], (0, 1, 0))
         self.add_prohibit_area(self.block1, padding=0.07)
         self.add_prohibit_area(self.block2, padding=0.07)
-        target_pose = [-0.04, -0.13, 0.04, -0.05]
+        target_pose = [-0.1, -0.05, 0.04, -0.05]
         self.prohibited_area.append(target_pose)
-        self.block1_target_pose = [0, -0.13, 0.75 + self.table_z_bias, 0, 1, 0, 0]
+        self.block1_target_pose = [0, -0.1, 0.75 + self.table_z_bias, 0, 1, 0, 0]
 
     def play_once(self):
         # Initialize tracking variables for gripper and actor
@@ -84,16 +85,16 @@ class stack_blocks_two(Base_Task):
 
         if self.last_gripper is not None and (self.last_gripper != arm_tag):
             self.move(
-                self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.09),  # arm_tag
+                self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.05),  # arm_tag
                 self.back_to_origin(arm_tag=arm_tag.opposite),  # arm_tag.opposite
             )
         else:
-            self.move(self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.09))  # arm_tag
+            self.move(self.grasp_actor(block, arm_tag=arm_tag, pre_grasp_dis=0.05))  # arm_tag
 
-        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07))  # arm_tag
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.05))  # arm_tag
 
         if self.last_actor is None:
-            target_pose = [0, -0.13, 0.75 + self.table_z_bias, 0, 1, 0, 0]
+            target_pose = [0, -0.08, 0.75 + self.table_z_bias, 0, 1, 0, 0]
         else:
             target_pose = self.last_actor.get_functional_point(1)
 
@@ -105,9 +106,9 @@ class stack_blocks_two(Base_Task):
                 functional_point_id=0,
                 pre_dis=0.05,
                 dis=0.,
-                pre_dis_axis="fp",
+                pre_dis_axis="fp"
             ))
-        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.07))  # arm_tag
+        self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.05))  # arm_tag
 
         self.last_gripper = arm_tag
         self.last_actor = block

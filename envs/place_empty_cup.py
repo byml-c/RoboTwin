@@ -15,7 +15,7 @@ class place_empty_cup(Base_Task):
         self.cup = rand_create_actor(
             self,
             xlim=cup_xlim[tag],
-            ylim=[-0.2, 0.05],
+            ylim=[-0.05, 0.05],
             modelname="021_cup",
             rotate_rand=False,
             qpos=[0.5, 0.5, 0.5, 0.5],
@@ -26,7 +26,7 @@ class place_empty_cup(Base_Task):
 
         coaster_pose = rand_pose(
             xlim=coaster_lim[tag],
-            ylim=[-0.2, 0.05],
+            ylim=[0.05, -0.05],
             rotate_rand=False,
             qpos=[0.5, 0.5, 0.5, 0.5],
         )
@@ -34,7 +34,7 @@ class place_empty_cup(Base_Task):
         while np.sum(pow(cup_pose[:2] - coaster_pose.p[:2], 2)) < 0.01:
             coaster_pose = rand_pose(
                 xlim=coaster_lim[tag],
-                ylim=[-0.2, 0.05],
+                ylim=[0.05, -0.05],
                 rotate_rand=False,
                 qpos=[0.5, 0.5, 0.5, 0.5],
             )

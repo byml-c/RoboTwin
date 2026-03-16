@@ -30,8 +30,8 @@ class adjust_bottle(Base_Task):
         )
         self.delay(4)
         self.add_prohibit_area(self.bottle, padding=0.15)
-        self.left_target_pose = [-0.25, -0.12, 0.95, 0, 1, 0, 0]
-        self.right_target_pose = [0.25, -0.12, 0.95, 0, 1, 0, 0]
+        self.left_target_pose = [-0.2, -0.05, 0.95, 0, 1, 0, 0]
+        self.right_target_pose = [0.2, -0.05, 0.95, 0, 1, 0, 0]
 
     def play_once(self):
         # Determine which arm to use based on qpose_tag (1 for right, else left)
@@ -40,7 +40,7 @@ class adjust_bottle(Base_Task):
         target_pose = (self.right_target_pose if self.qpose_tag == 1 else self.left_target_pose)
 
         # Grasp the bottle with specified arm
-        self.move(self.grasp_actor(self.bottle, arm_tag=arm_tag, pre_grasp_dis=0.1))
+        self.move(self.grasp_actor(self.bottle, arm_tag=arm_tag, pre_grasp_dis=0.15))
         # Move the arm upward by 0.1 meters along z-axis
         self.move(self.move_by_displacement(arm_tag=arm_tag, z=0.1, move_axis="arm"))
         # Place the bottle at target pose (functional point 0) while keeping gripper closed

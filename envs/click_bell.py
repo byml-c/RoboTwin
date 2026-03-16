@@ -13,13 +13,13 @@ class click_bell(Base_Task):
     def load_actors(self):
         rand_pos = rand_pose(
             xlim=[-0.25, 0.25],
-            ylim=[-0.2, 0.0],
+            ylim=[-0.1, 0.0],
             qpos=[0.5, 0.5, 0.5, 0.5],
         )
         while abs(rand_pos.p[0]) < 0.05:
             rand_pos = rand_pose(
                 xlim=[-0.25, 0.25],
-                ylim=[-0.2, 0.0],
+                ylim=[-0.1, 0.0],
                 qpos=[0.5, 0.5, 0.5, 0.5],
             )
 
@@ -46,19 +46,19 @@ class click_bell(Base_Task):
         self.move(self.grasp_actor(
             self.bell,
             arm_tag=arm_tag,
-            pre_grasp_dis=0.1,
-            grasp_dis=0.1,
+            pre_grasp_dis=0.08,
+            grasp_dis=0.08,
             contact_point_id=0,  # Targeting the bell's top center
         ))
     
         # Move the gripper downward to touch the top center of the bell
-        self.move(self.move_by_displacement(arm_tag, z=-0.045))
+        self.move(self.move_by_displacement(arm_tag, z=-0.06))
     
         # Check whether the simulated click action was successful
         self.check_success()
     
         # Move the gripper back up to the original position (no need to lift or grasp the bell)
-        self.move(self.move_by_displacement(arm_tag, z=0.045))
+        self.move(self.move_by_displacement(arm_tag, z=0.06))
     
         # Check success again if needed (optional, based on your task logic)
         self.check_success()

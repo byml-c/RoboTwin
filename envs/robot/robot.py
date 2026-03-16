@@ -60,6 +60,9 @@ class Robot:
         self.left_global_trans_matrix = np.array(
             left_embodiment_args.get("global_trans_matrix", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
 
+        self.left_fixed_joints = left_embodiment_args.get("fixed_joints", {})
+        self.left_planner_base_link = left_embodiment_args.get("planner_base_link", [None, None])[0]
+
         _entity_origion_pose = left_embodiment_args.get("robot_pose", [[0, -0.65, 0, 1, 0, 0, 1]])[0]
         _entity_origion_pose = sapien.Pose(_entity_origion_pose[:3], _entity_origion_pose[-4:])
         self.left_entity_origion_pose = deepcopy(_entity_origion_pose)
@@ -86,6 +89,9 @@ class Robot:
         self.right_inv_delta_matrix = np.linalg.inv(self.right_delta_matrix)
         self.right_global_trans_matrix = np.array(
             right_embodiment_args.get("global_trans_matrix", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+        
+        self.right_fixed_joints = right_embodiment_args.get("fixed_joints", {})
+        self.right_planner_base_link = right_embodiment_args.get("planner_base_link", [None, None])[1]
 
         _entity_origion_pose = right_embodiment_args.get("robot_pose", [[0, -0.65, 0, 1, 0, 0, 1]])
         _entity_origion_pose = _entity_origion_pose[0 if len(_entity_origion_pose) == 1 else 1]
@@ -120,6 +126,11 @@ class Robot:
 
         self.left_entity.set_root_pose(self.left_entity_origion_pose)
         self.right_entity.set_root_pose(self.right_entity_origion_pose)
+            
+        if self.left_planner_base_link is not None:
+            self.left_planner_base_link = self.left_entity.find_link_by_name(self.left_planner_base_link)
+        if self.right_planner_base_link is not None:
+            self.right_planner_base_link = self.right_entity.find_link_by_name(self.right_planner_base_link)
 
     def reset(self, scene, need_topp=False, **kwargs):
         self._init_robot_(scene, need_topp, **kwargs)
@@ -178,6 +189,11 @@ class Robot:
 
         self.left_arm_joints = [self.left_entity.find_joint_by_name(i) for i in self.left_arm_joints_name]
         self.right_arm_joints = [self.right_entity.find_joint_by_name(i) for i in self.right_arm_joints_name]
+        
+        self.left_fixed_joints = {
+            k: (self.left_entity.find_joint_by_name(k), v) for k, v in self.left_fixed_joints.items()}
+        self.right_fixed_joints = {
+            k: (self.right_entity.find_joint_by_name(k), v) for k, v in self.right_fixed_joints.items()}
 
         def get_gripper_joints(find, gripper_name: str):
             gripper = [(find(gripper_name["base"]), 1.0, 0.0)]
@@ -233,6 +249,11 @@ class Robot:
 
         for i, joint in enumerate(self.right_arm_joints):
             joint.set_drive_target(self.right_homestate[i])
+        
+        for joint_name, (joint, value) in self.left_fixed_joints.items():
+            joint.set_drive_target(value)
+        for joint_name, (joint, value) in self.right_fixed_joints.items():
+            joint.set_drive_target(value)
 
     def set_origin_endpose(self):
         self.left_original_pose = self.get_left_ee_pose()
@@ -268,11 +289,13 @@ class Robot:
             self.left_planner = CuroboPlanner(self.left_entity_origion_pose,
                                               self.left_arm_joints_name,
                                               [joint.get_name() for joint in self.left_entity.get_active_joints()],
-                                              yml_path=abs_left_curobo_yml_path)
+                                              yml_path=abs_left_curobo_yml_path,
+                                              robot_origin_link=self.left_planner_base_link)
             self.right_planner = CuroboPlanner(self.right_entity_origion_pose,
                                                self.right_arm_joints_name,
                                                [joint.get_name() for joint in self.right_entity.get_active_joints()],
-                                               yml_path=abs_right_curobo_yml_path)
+                                               yml_path=abs_right_curobo_yml_path,
+                                               robot_origin_link=self.right_planner_base_link)
         else:
             self.left_conn, left_child_conn = mp.Pipe()
             self.right_conn, right_child_conn = mp.Pipe()
@@ -281,14 +304,16 @@ class Robot:
                 "origin_pose": self.left_entity_origion_pose,
                 "joints_name": self.left_arm_joints_name,
                 "all_joints": [joint.get_name() for joint in self.left_entity.get_active_joints()],
-                "yml_path": abs_left_curobo_yml_path
+                "yml_path": abs_left_curobo_yml_path,
+                "robot_origin_link": self.left_planner_base_link,
             }
 
             right_args = {
                 "origin_pose": self.right_entity_origion_pose,
                 "joints_name": self.right_arm_joints_name,
                 "all_joints": [joint.get_name() for joint in self.right_entity.get_active_joints()],
-                "yml_path": abs_right_curobo_yml_path
+                "yml_path": abs_right_curobo_yml_path,
+                "robot_origin_link": self.right_planner_base_link,
             }
 
             self.left_proc = mp.Process(target=planner_process_worker, args=(left_child_conn, left_args))

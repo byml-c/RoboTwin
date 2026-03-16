@@ -9,6 +9,8 @@ def pause(task, till_close=False, show_point=False):
     if show_point:
         for point in Point.points:
             point.update()
+    
+    task.scene.update_render()
     task.viewer.paused = True
     while task.viewer.paused:
         task.viewer.render()
@@ -354,7 +356,7 @@ def choose_dirct(block_mat, base_pose: sapien.Pose):
 
 
 def add_robot_visual_box(task, pose: sapien.Pose | list, name: str = "box"):
-    box_path = Path("./assets/objects/cube/textured.obj")
+    box_path = Path("./assets/objects/cube/visual/textured0.obj")
     if not box_path.exists():
         print("[WARNNING] cube not exists!")
         return

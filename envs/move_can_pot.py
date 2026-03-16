@@ -17,7 +17,7 @@ class move_can_pot(Base_Task):
             modelname="060_kitchenpot",
             modelid=self.pot_id,
             xlim=[0.0, 0.0],
-            ylim=[0.0, 0.0],
+            ylim=[-0.05, -0.05],
             rotate_rand=True,
             rotate_lim=[0, 0, np.pi / 8],
             qpos=[0, 0, 0, 1],
@@ -25,7 +25,7 @@ class move_can_pot(Base_Task):
         pot_pose = self.pot.get_pose()
         rand_pos = rand_pose(
             xlim=[-0.3, 0.3],
-            ylim=[0.05, 0.15],
+            ylim=[-0.05, -0.02],
             qpos=[0.5, 0.5, 0.5, 0.5],
             rotate_rand=True,
             rotate_lim=[0, np.pi / 4, 0],
@@ -34,7 +34,7 @@ class move_can_pot(Base_Task):
                                             (pot_pose.p[1] - rand_pos.p[1])**2) < 0.09):
             rand_pos = rand_pose(
                 xlim=[-0.3, 0.3],
-                ylim=[0.05, 0.15],
+                ylim=[-0.05, -0.02],
                 qpos=[0.5, 0.5, 0.5, 0.5],
                 rotate_rand=True,
                 rotate_lim=[0, np.pi / 4, 0],
@@ -72,9 +72,9 @@ class move_can_pot(Base_Task):
     def play_once(self):
         arm_tag = self.arm_tag
         # Grasp the can with specified pre-grasp distance
-        self.move(self.grasp_actor(self.can, arm_tag=arm_tag, pre_grasp_dis=0.05))
+        self.move(self.grasp_actor(self.can, arm_tag=arm_tag, pre_grasp_dis=0.02))
         # Move the can backward and upward
-        self.move(self.move_by_displacement(arm_tag, y=-0.1, z=0.1))
+        self.move(self.move_by_displacement(arm_tag, z=0.05))
 
         # Place the can near the pot at calculated target pose
         self.move(self.place_actor(
@@ -83,6 +83,7 @@ class move_can_pot(Base_Task):
             arm_tag=arm_tag,
             pre_dis=0.05,
             dis=0.0,
+            constrain='free'
         ))
 
         self.info["info"] = {

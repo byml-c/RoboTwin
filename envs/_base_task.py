@@ -886,6 +886,8 @@ class Base_Task(gym.Env):
         actions_by_arm1: tuple[ArmTag, list[Action]],
         actions_by_arm2: tuple[ArmTag, list[Action]] = None,
         save_freq=-1,
+        debug=True
+        # debug=True
     ):
         """
         Take action for the robot.
@@ -946,6 +948,11 @@ class Base_Task(gym.Env):
                             pose=left.target_pose,
                             constraint_pose=left.args.get("constraint_pose"),
                         )
+                        if debug:
+                            if control_seq["left_arm"] is None:
+                                add_robot_visual_box(self, left.target_pose, 'plan_fail')
+                            else:
+                                add_robot_visual_box(self, left.target_pose, 'plan_success')
                     else:  # left.action == 'gripper'
                         control_seq["left_gripper"] = self.set_gripper(left_pos=left.target_gripper_pos, set_tag="left")
                     if self.plan_success is False:
@@ -957,6 +964,11 @@ class Base_Task(gym.Env):
                             pose=right.target_pose,
                             constraint_pose=right.args.get("constraint_pose"),
                         )
+                        if debug:
+                            if control_seq["right_arm"] is None:
+                                add_robot_visual_box(self, right.target_pose, 'plan_fail')
+                            else:
+                                add_robot_visual_box(self, right.target_pose, 'plan_success')
                     else:  # right.action == 'gripper'
                         control_seq["right_gripper"] = self.set_gripper(right_pos=right.target_gripper_pos,
                                                                         set_tag="right")
@@ -1003,6 +1015,7 @@ class Base_Task(gym.Env):
     def choose_best_pose(self, res_pose, center_pose, arm_tag: ArmTag = None):
         """
         Choose the best pose from the list of target poses.
+                self.move(self.move_to_pose(tag, target_pose))", 
         - target_lst: List of target poses.
         """
         if not self.plan_success:
@@ -1212,7 +1225,7 @@ class Base_Task(gym.Env):
                     arm_tag,
                     "move",
                     target_pose=grasp_pose,
-                    constraint_pose=[1, 1, 1, 0, 0, 0],
+                    constraint_pose=[1, 1, 1, 0, 0, 0]
                 ),
                 Action(arm_tag, "close", target_gripper_pos=gripper_pos),
             ]

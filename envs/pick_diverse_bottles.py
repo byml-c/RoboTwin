@@ -16,7 +16,7 @@ class pick_diverse_bottles(Base_Task):
         self.bottle1 = rand_create_actor(
             self,
             xlim=[-0.25, -0.05],
-            ylim=[0.03, 0.23],
+            ylim=[-0.05, 0.05],
             modelname="001_bottle",
             rotate_rand=True,
             rotate_lim=[0, 1, 0],
@@ -28,7 +28,7 @@ class pick_diverse_bottles(Base_Task):
         self.bottle2 = rand_create_actor(
             self,
             xlim=[0.05, 0.25],
-            ylim=[0.03, 0.23],
+            ylim=[-0.05, 0.05],
             modelname="001_bottle",
             rotate_rand=True,
             rotate_lim=[0, 1, 0],
@@ -43,8 +43,8 @@ class pick_diverse_bottles(Base_Task):
         self.add_prohibit_area(self.bottle2, padding=0.1)
         target_posi = [-0.2, -0.2, 0.2, -0.02]
         self.prohibited_area.append(target_posi)
-        self.left_target_pose = [-0.06, -0.105, 1, 0, 1, 0, 0]
-        self.right_target_pose = [0.06, -0.105, 1, 0, 1, 0, 0]
+        self.left_target_pose = [-0.06, -0.05, 1, 0, 1, 0, 0]
+        self.right_target_pose = [0.06, -0.05, 1, 0, 1, 0, 0]
 
     def play_once(self):
         # Determine which arm to use for each bottle based on their x-coordinate position
